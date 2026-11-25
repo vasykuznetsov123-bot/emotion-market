@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эмоции Москвы — Маркетплейс подарочных сертификатов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Шапка сайта -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="logo">✨ Эмоции<span>.МСК</span></div>
+            <nav class="nav">
+                <button class="nav-btn active" data-tab="catalog">Каталог впечатлений</button>
+                <button class="nav-btn" data-tab="check">Проверить сертификат</button>
+                <button class="nav-btn" data-tab="admin">1С Интеграция (Логи)</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Вкладка 1: Витрина -->
+        <section id="tab-catalog" class="tab-content active">
+            <div class="hero">
+                <h1>Дарите впечатления вместо вещей</h1>
+                <p>Моментальные электронные сертификаты на авторские экскурсии, мастер-классы и необычные свидания в Москве. Код приходит сразу после оплаты.</p>
+            </div>
+
+            <div class="filters" id="filters">
+                <button class="filter-btn active" data-category="all">Все впечатления</button>
+                <button class="filter-btn" data-category="date">❤️ Для двоих</button>
+                <button class="filter-btn" data-category="relax">🎨 Антистресс и творчество</button>
+                <button class="filter-btn" data-category="tour">🏛️ Авторские экскурсии</button>
+                <button class="filter-btn" data-category="drive">⚡ Драйв и экстрим</button>
+            </div>
+
+            <div class="catalog-grid" id="catalog-grid"></div>
+        </section>
+
+        <!-- Вкладка 2: Проверка и гашение сертификата (для гида/получателя) -->
+        <section id="tab-check" class="tab-content">
+            <div class="check-container">
+                <h2>Проверка и активация сертификата</h2>
+                <p class="section-desc">Введите уникальный промокод сертификата (например, <strong>MSK-8492</strong>), чтобы проверить его подлинность или отметить как использованный на месте проведения услуги.</p>
+
+                <form id="check-form" class="check-form">
+                    <input type="text" id="check-code-input" placeholder="Введите код (например: MSK-1234)" required>
+                    <button type="submit" class="submit-btn check-submit">Проверить код</button>
+                </form>
+
+                <!-- Блок результата проверки -->
+                <div id="check-result" class="check-result"></div>
+            </div>
+        </section>
+
+        <!-- Вкладка 3: Админка и логи REST API для 1С:Предприятие -->
+        <section id="tab-admin" class="tab-content">
+            <div class="admin-header">
+                <div>
+                    <h2>Регистр сертификатов и шлюз «1С:Предприятие»</h2>
+                    <p class="section-desc">Автоматическая фиксация продаж (Документ «Операция по платежной карте») и актов оказания услуг («Реализация услуг»).</p>
+                </div>
+                <button type="button" class="download-json-btn" id="download-json-btn">📥 Скачать JSON для 1С</button>
+            </div>
+
+            <!-- Карточки финансовой аналитики -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Всего продано сертификатов</span>
+                    <strong class="stat-value" id="stat-total">0 шт.</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Общий оборот (Эквайринг)</span>
+                    <strong class="stat-value" id="stat-revenue">0 ₽</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Доход сервиса (Комиссия 10%)</span>
+                    <strong class="stat-value stat-accent" id="stat-commission">0 ₽</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Погашено (Активировано гидами)</span>
+                    <strong class="stat-value" id="stat-redeemed">0 шт.</strong>
+                </div>
+            </div>
+
+            <!-- Таблица регистра сведений 1С -->
+            <div class="admin-card">
+                <h3>Регистр сведений: «Активные сертификаты»</h3>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Промокод</th>
+                                <th>Дата и время</th>
+                                <th>Номенклатура (Услуга)</th>
+                                <th>Контрагент (Гид)</th>
+                                <th>Сумма / Комиссия</th>
+                                <th>Статус в 1С</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body">
+                            <!-- Строки подгрузятся автоматически -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Окно живого JSON-лога (REST API) -->
+            <div class="admin-card">
+                <h3>Лог исходящего пакета REST API → 1С (JSON)</h3>
+                <p class="json-hint">Этот пакет автоматически формируется при каждой покупке и гашении для загрузки в базу «1С:Предприятие»:</p>
+                <pre class="json-viewer" id="json-viewer">[]</pre>
+            </div>
+        </section>
+    </main>
+
+    <!-- Модальное окно оформления сертификата -->
+    <div class="modal-overlay" id="order-modal">
+        <div class="modal-box">
+            <button class="modal-close" id="close-order-modal">✕</button>
+            <h2>Оформление подарка</h2>
+            <p class="modal-subtitle" id="modal-exp-title"></p>
+
+            <form id="order-form">
+                <div class="form-group">
+                    <label>Кому дарим (Имя получателя) *</label>
+                    <input type="text" id="recipient-name" placeholder="Например: Анне" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Ваш Email или Telegram (куда отправить чек и копию) *</label>
+                    <input type="text" id="buyer-contact" placeholder="@username или mail@example.ru" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Поздравление на сертификате (необязательно)</label>
+                    <textarea id="gift-message" rows="2" placeholder="С днём рождения! Пусть этот день запомнится надолго ✨"></textarea>
+                </div>
+
+                <div class="order-summary">
+                    <span>К оплате (вкл. комиссию сервиса 10%):</span>
+                    <strong id="modal-exp-price">0 ₽</strong>
+                </div>
+
+                <button type="submit" class="submit-btn">Оплатить и получить сертификат</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно готового сертификата -->
+    <div class="modal-overlay" id="cert-modal">
+        <div class="modal-box cert-result-box">
+            <button class="modal-close" id="close-cert-modal">✕</button>
+            <div class="success-badge">✅ Оплата прошла успешно!</div>
+            
+            <div class="certificate-card">
+                <div class="cert-header">
+                    <span>ПОДАРОЧНЫЙ СЕРТИФИКАТ</span>
+                    <span>✨ Эмоции.МСК</span>
+                </div>
+                <div class="cert-body">
+                    <div class="cert-for">Для: <strong id="cert-recipient"></strong></div>
+                    <h3 id="cert-title"></h3>
+                    <p class="cert-wish" id="cert-wish"></p>
+                    <div class="cert-partner" id="cert-partner"></div>
+                </div>
+                <div class="cert-footer">
+                    <div>
+                        <span class="cert-code-label">Уникальный промокод для активации:</span>
+                        <div class="cert-code" id="cert-code">MSK-0000</div>
+                    </div>
+                    <button type="button" class="copy-btn" id="copy-code-btn">Копировать</button>
+                </div>
+            </div>
+
+            <p class="cert-hint">Данные о продаже автоматически сформированы для передачи в «1С:Предприятие». Проверить код можно во вкладке «Проверить сертификат».</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
